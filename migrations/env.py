@@ -25,11 +25,7 @@ def get_engine():
 
 
 def get_engine_url():
-    try:
-        return get_engine().url.render_as_string(hide_password=False).replace(
-            '%', '%%')
-    except AttributeError:
-        return str(get_engine().url).replace('%', '%%')
+    return current_app.config['SQLALCHEMY_DATABASE_URI'].replace('%', '%%')
 
 
 # add your model's MetaData object here
@@ -37,6 +33,7 @@ def get_engine_url():
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 config.set_main_option('sqlalchemy.url', get_engine_url())
+print(f"DEBUG: Alembic URL being used: {get_engine_url()}")
 target_db = current_app.extensions['migrate'].db
 
 # other values from the config, defined by the needs of env.py,
