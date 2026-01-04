@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">Daily Food Entry</h4>
+            </div>
+            <div class="card-body">
+                <form action="" method="post">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="date" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="date" name="date" required value="{{ today }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="food_item" class="form-label">Food Item</label>
+                            <select class="form-select" id="food_item" name="food_item_id" required>
+                                <option value="" selected disabled>Choose...</option>
+                                {% for item in food_items %}
+                                <option value="{{ item.id }}">{{ item.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <h5 class="mt-4 mb-3 border-bottom pb-2">Quantities</h5>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="prepared" class="form-label">Prepared (Qty)</label>
+                            <input type="number" class="form-control" id="prepared" name="prepared_qty" min="0"
+                                required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="dine_in" class="form-label">Sold (Dine-in)</label>
+                            <input type="number" class="form-control" id="dine_in" name="sold_dine_in" min="0" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="delivery" class="form-label">Sold (Delivery)</label>
+                            <input type="number" class="form-control" id="delivery" name="sold_delivery" min="0"
+                                required>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning d-flex align-items-center" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
+                        <div>
+                            Waste will be calculated automatically upon submission.
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-secondary me-md-2"
+                            onclick="window.history.back()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Submit Entry</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

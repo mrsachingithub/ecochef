@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2>Kitchen - Live Orders</h2>
+        <button class="btn btn-primary btn-sm" onclick="location.reload()"><i class="bi bi-arrow-clockwise"></i>
+            Refresh</button>
+    </div>
+</div>
+
+<div class="row">
+    {% for order in orders %}
+    <div class="col-md-4 mb-4">
+        <div class="card shadow border-{{ 'warning' if order.status == 'Pending' else 'success' }}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Order #{{ order.id }}</strong>
+                <span class="badge bg-{{ 'warning' if order.status == 'Pending' else 'success' }}">{{ order.status
+                    }}</span>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">{{ order.customer_name }}</h5>
+                <p class="text-muted small">{{ order.address }}</p>
+                <ul class="list-group list-group-flush mb-3">
+                    {% for item_name, qty in order.items_dict.items() %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ item_name }}
+                        <span class="badge bg-secondary rounded-pill">{{ qty }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <p class="text-end text-muted small">{{ order.timestamp.strftime('%H:%M') }}</p>
+
+                {% if order.status == 'Pending' %}
+                <div class="d-grid">
+                    <form action="{{ url_for('main.update_order_status', order_id=order.id) }}" method="post">
+                        <button type="submit" class="btn btn-success w-100">Mark as Delivered</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info">No active orders.</div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

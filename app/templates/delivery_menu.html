@@ -1,0 +1,506 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="hero-section" class="p-5 p-md-5 mb-5 text-white rounded bg-dark position-relative overflow-hidden"
+    style="min-height: 400px; display: flex; align-items: flex-start;">
+
+    <!-- Background Layers for Crossfade -->
+    <div id="hero-bg-back" class="position-absolute top-0 start-0 w-100 h-100"
+        style="background-size: cover; background-position: center; z-index: 0;"></div>
+    <div id="hero-bg-front" class="position-absolute top-0 start-0 w-100 h-100"
+        style="background-size: cover; background-position: center; z-index: 1; transition: opacity 1.5s ease-in-out;">
+    </div>
+
+    <!-- Content -->
+    <div class="col-md-8 px-0 position-relative" style="z-index: 2;">
+        <h1 class="display-3 fst-italic fw-bold">EcoChef Fast Delivery</h1>
+        <p class="lead my-3 fs-3">Craving something delicious? Order now and get it delivered in <strong>30
+                minutes</strong>
+            or less!</p>
+        <p class="lead mb-0">
+
+            {% if current_user.is_authenticated and current_user.role == 'admin' %}
+            <a href="{{ url_for('main.add_food') }}" class="btn btn-light btn-lg fw-bold mt-2 ms-2">Manage Menu <i
+                    class="bi bi-plus-circle"></i></a>
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Collect all image URLs from the food items
+        const foodImages = [
+            '{{ url_for("static", filename="images/hero_food.jpg") }}', // Start with hero
+            {% for item in food_items %}
+                '{{ item.image_url }}',
+        {% endfor %}
+        ];
+
+    let currentImageIndex = 0;
+    const bgFront = document.getElementById('hero-bg-front');
+    const bgBack = document.getElementById('hero-bg-back');
+
+    // Preload images to avoid flickering
+    foodImages.forEach(src => {
+        const img = new Image();
+        img.src = src;
+    });
+
+    // Initial State
+    const initialUrl = `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('${foodImages[0]}')`;
+    bgFront.style.backgroundImage = initialUrl;
+    bgBack.style.backgroundImage = initialUrl; // Start with same to avoid flicker
+
+    setInterval(() => {
+        // 1. Prepare Next Image on Back Layer
+        const nextIndex = (currentImageIndex + 1) % foodImages.length;
+        const nextUrl = `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('${foodImages[nextIndex]}')`;
+        bgBack.style.backgroundImage = nextUrl;
+
+        // 2. Fade content out (Front Layer becomes transparent, revealing Back Layer)
+        bgFront.style.opacity = 0;
+
+        // 3. After transition matches logical switch
+        setTimeout(() => {
+            currentImageIndex = nextIndex;
+            // Move the displayed image to the front layer (instantly, but invisible or same)
+            bgFront.style.backgroundImage = nextUrl;
+            // Reset opacity instantly (remove transition to prevent flash?) 
+            // Actually, if we change transparency while image is same, it shouldn't flash.
+            // But to be safe, we disable transition, set opacity, re-enable.
+            bgFront.style.transition = 'none';
+            bgFront.style.opacity = 1;
+
+            // Force reflow
+            void bgFront.offsetWidth;
+
+            // Re-enable transition for next loop
+            bgFront.style.transition = 'opacity 1.5s ease-in-out';
+        }, 1500); // Matches the CSS transition duration (1.5s)
+
+    }, 5000); // 5 seconds per slide for a "relaxed" pace
+    });
+</script>
+
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+            <!-- Category Filters -->
+            <div class="btn-group" role="group" aria-label="Food Categories">
+                <button type="button" class="btn btn-outline-dark active filter-btn" data-filter="all">All</button>
+                <button type="button" class="btn btn-outline-dark filter-btn" data-filter="Fast Food">Fast Food</button>
+                <!-- Main Course removed as requested -->
+                <button type="button" class="btn btn-outline-dark filter-btn" data-filter="South Indian">South
+                    Indian</button>
+                <button type="button" class="btn btn-outline-dark filter-btn" data-filter="Snacks">Snacks</button>
+                <button type="button" class="btn btn-outline-dark filter-btn" data-filter="Dessert">Dessert</button>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="input-group" style="max-width: 300px;">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control border-start-0 ps-0" id="searchInput"
+                    placeholder="Search for dishes...">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-9"> <!-- Increased main column width -->
+        <div class="row" id="menu-items">
+            {% for item in food_items %}
+            <div class="col-md-6 col-lg-4 mb-4 menu-item-card" data-category="{{ item.category }}"
+                data-name="{{ item.name | lower }}"> <!-- Changed grid to col-lg-4 -->
+                <div class="card shadow-sm h-100 border-0 position-relative">
+                    {% if item.discount > 0 %}
+                    <span class="position-absolute top-0 end-0 badge rounded-pill bg-danger m-2 p-2">{{ item.discount
+                        }}% OFF</span>
+                    {% endif %}
+                    <img src="{{ item.image_url }}" class="card-img-top" alt="{{ item.name }}"
+                        style="height: 250px; object-fit: cover; cursor: pointer;" onclick="openImage(this.src)">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title fw-bold">{{ item.name }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">{{ item.category }}</h6>
+                        <div class="mb-2 text-warning">
+                            <span class="fw-bold text-dark me-1">{{ item.rating }}</span>
+                            <i class="bi bi-star-fill"></i>
+                            <span class="text-muted small ms-1">({{ item.review_count }} reviews)</span>
+                        </div>
+                        <p class="card-text flex-grow-1">
+                            Delicious {{ item.name }} prepared fresh.
+                            {% if item.free_delivery %}
+                            <br><span class="text-success small fw-bold"><i class="bi bi-truck"></i> Free Delivery
+                                available</span>
+                            {% endif %}
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <span class="fs-5 fw-bold">${{ item.cost_per_unit }}</span>
+                            <button class="btn btn-outline-success add-to-cart" onclick="addToCart(this)"
+                                data-id="{{ item.id }}" data-name="{{ item.name }}"
+                                data-price="{{ item.cost_per_unit }}">
+                                Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow sticky-top" style="top: 20px;">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Your Cart <span class="badge bg-light text-dark float-end" id="cart-count">0</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="cart-items" class="mb-3">
+                    <p class="text-muted text-center" id="empty-cart-msg">Your cart is empty.</p>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between mb-3">
+                    <strong>Total:</strong>
+                    <span id="cart-total">$0.00</span>
+                </div>
+
+                <form id="orderForm" style="display: none;">
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" id="custName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Address</label>
+                        <textarea class="form-control" id="custAddress" rows="2" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Place Order</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Post Order Modal -->
+<div class="modal fade" id="postOrderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Thank You for your Order! 🍽️</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Order Summary -->
+                <div class="mb-4">
+                    <h6>Order Summary:</h6>
+                    <ul id="order-summary-list" class="list-group mb-2">
+                        <!-- Items injected by JS -->
+                    </ul>
+                </div>
+
+                <!-- Recommendations -->
+                <div id="recommendation-section" class="mb-4" style="display: none;">
+                    <h6 class="text-primary">You may also like:</h6>
+                    <p class="small text-muted">Customers who ordered these also loved:</p>
+                    <div class="row" id="recommendation-list">
+                        <!-- Recommendations injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Loyalty -->
+                <div class="alert alert-info">
+                    <strong>🎉 Bonus:</strong> Use code <strong>WELCOME5</strong> for 5% off your next order!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-outline-success" onclick="location.reload()">Place New
+                    Order</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Search and Filter Logic
+    const searchInput = document.getElementById('searchInput');
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const cards = document.querySelectorAll('.menu-item-card');
+
+    function filterMenu() {
+        const query = searchInput.value.toLowerCase();
+        const activeCategory = document.querySelector('.filter-btn.active').dataset.filter;
+
+        cards.forEach(card => {
+            const name = card.dataset.name;
+            const category = card.dataset.category;
+
+            const matchesSearch = name.includes(query);
+            const matchesCategory = activeCategory === 'all' || category === activeCategory;
+
+            if (matchesSearch && matchesCategory) {
+                card.classList.remove('d-none');
+            } else {
+                card.classList.add('d-none');
+            }
+        });
+    }
+
+    searchInput.addEventListener('input', filterMenu);
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', function () {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            filterMenu();
+        });
+    });
+
+    // Cart Logic Existing...
+    let cart = {};
+    const cartItemsDiv = document.getElementById('cart-items');
+    const emptyMsg = document.getElementById('empty-cart-msg');
+    const cartTotalSpan = document.getElementById('cart-total');
+    const cartCountBadge = document.getElementById('cart-count');
+    const orderForm = document.getElementById('orderForm');
+
+    // Recommendation Knowledge Base
+    const recommendedItems = {
+        "paneer": ["Butter Roti", "Veg Fried Rice", "Gulab Jamun"],
+        "butter masala": ["Butter Roti", "Jeera Rice"],
+        "biryani": ["Raita", "Green Salad", "Gulab Jamun"],
+        "pizza": ["Coke", "Garlic Bread", "Choco Lava Cake"],
+        "burger": ["French Fries", "Coke"],
+        "pasta": ["Garlic Bread", "Coke"],
+        "dosa": ["Idly Sambar", "Filter Coffee"],
+        "idly": ["Vada", "Filter Coffee"],
+        "thali": ["Lassi", "Gulab Jamun"]
+    };
+
+    function addToCart(btn) {
+        const id = btn.dataset.id;
+        const name = btn.dataset.name;
+        const price = parseFloat(btn.dataset.price);
+
+        if (cart[id]) {
+            cart[id].qty++;
+        } else {
+            cart[id] = { name: name, price: price, qty: 1 };
+        }
+        updateCart();
+    }
+
+    function updateCart() {
+        cartItemsDiv.innerHTML = '';
+        let total = 0;
+        let count = 0;
+
+        if (Object.keys(cart).length === 0) {
+            emptyMsg.style.display = 'block';
+            orderForm.style.display = 'none'; // Hide form if cart is empty
+        } else {
+            emptyMsg.style.display = 'none';
+            orderForm.style.display = 'block'; // Show form if cart has items
+
+            for (const [id, item] of Object.entries(cart)) {
+                total += item.price * item.qty;
+                count += item.qty;
+
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'd-flex justify-content-between align-items-center mb-2 border-bottom pb-2';
+                itemDiv.innerHTML = `
+                    <div>
+                        <h6 class="mb-0">${item.name}</h6>
+                        <small class="text-muted">$${item.price} x ${item.qty}</small>
+                    </div>
+                    <div>
+                        <span class="text-success fw-bold">$${(item.price * item.qty).toFixed(2)}</span>
+                        <button class="btn btn-sm btn-outline-danger ms-2" onclick="removeFromCart('${id}')">&times;</button>
+                    </div>
+                `;
+                cartItemsDiv.appendChild(itemDiv);
+            }
+        }
+        cartTotalSpan.innerText = '$' + total.toFixed(2);
+        cartCountBadge.innerText = count;
+    }
+
+    function removeFromCart(id) {
+        delete cart[id];
+        updateCart();
+    }
+
+    // Attach to window so onclick works
+    window.addToCart = addToCart;
+    window.removeFromCart = removeFromCart;
+
+    // Initial cart update on load
+    document.addEventListener('DOMContentLoaded', updateCart);
+    // Removed duplicate event listener assignment as we switched to onclick attribute
+
+    // Handle Order Submission
+    orderForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        if (Object.keys(cart).length === 0) {
+            alert('Your cart is empty!');
+            return;
+        }
+
+        const name = document.getElementById('custName').value;
+        const address = document.getElementById('custAddress').value;
+
+        fetch('{{ url_for("main.place_order") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: name,
+                address: address,
+                cart: cart
+            })
+        })
+            .then(async response => {
+                if (!response.ok) {
+                    const text = await response.text();
+                    throw new Error(`Server status: ${response.status}. Message: ${text}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showPostOrderModal(name);
+                    cart = {}; // Clear cart
+                    updateCart();
+                    orderForm.reset();
+                } else {
+                    alert('Order failed: ' + data.message);
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('An error occurred: ' + error.message);
+            });
+    });
+
+    function showPostOrderModal(customerName) {
+        const summaryList = document.getElementById('order-summary-list');
+        const recSection = document.getElementById('recommendation-section');
+        const recList = document.getElementById('recommendation-list');
+        const modalTitle = document.querySelector('#postOrderModal .modal-title');
+
+        modalTitle.innerText = `Thank you for your order, ${customerName}! 🍽️`;
+
+        // 1. Populate/Clear Summary
+        summaryList.innerHTML = '';
+        const orderedItems = []; // For recommendation logic
+
+        // Since we clear cart immediately, we need to pass a copy or rely on last state.
+        // Wait, I cleared cart above before calling this? No, I call this then clear.
+        // Actually I cleared it *after* calling logic? 
+        // Ah, I need to pass the cart data before clearing. 
+        // Let's fix the order in the previous block or pass it here. 
+        // Current logic: cart is global. I call showPostOrderModal THEN clear.
+        // But wait, cart is cleared in .then() block right after calling showPostOrderModal.
+        // Standard JS runs synchronously, so it's fine.
+
+        // RE-FIX: I cleared it below `showPostOrderModal(name)` line in previous thought, check replacement content.
+
+        for (const [id, item] of Object.entries(cart)) {
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+            li.innerHTML = `${item.qty}x ${item.name} <span class="badge bg-primary rounded-pill">$${(item.price * item.qty).toFixed(2)}</span>`;
+            summaryList.appendChild(li);
+            orderedItems.push(item.name.toLowerCase());
+        }
+
+        // 2. Generate Recommendations
+        const suggestions = new Set();
+        orderedItems.forEach(orderItemName => {
+            for (const [key, items] of Object.entries(recommendedItems)) {
+                if (orderItemName.includes(key)) {
+                    items.forEach(i => suggestions.add(i));
+                }
+            }
+        });
+
+        if (suggestions.size > 0) {
+            recSection.style.display = 'block';
+            recList.innerHTML = '';
+            suggestions.forEach(item => {
+                const col = document.createElement('div');
+                col.className = 'col-md-4 mb-3';
+                col.innerHTML = `
+                    <div class="card h-100 text-center border-warning">
+                        <div class="card-body p-2">
+                            <h6 class="card-title text-dark small font-weight-bold">${item}</h6>
+                            <button class="btn btn-sm btn-outline-warning mt-1" 
+                                onclick="addRecommendation('${item}')">
+                                Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                `;
+                recList.appendChild(col);
+            });
+        } else {
+            recSection.style.display = 'none';
+        }
+
+        // Show Modal
+        const modal = new bootstrap.Modal(document.getElementById('postOrderModal'));
+        modal.show();
+
+        // Save modal instance to hide it later
+        window.currentModal = modal;
+    }
+
+    function addRecommendation(itemName) {
+        // Find item in food_items list (needs to be available in JS)
+        // Since we don't have full object map easily, we'll dummy it or search DOM
+        // Search DOM for the item with data-name
+        const cards = document.querySelectorAll('.menu-item-card');
+        let found = false;
+
+        cards.forEach(card => {
+            if (card.dataset.name.toLowerCase() === itemName.toLowerCase()) {
+                const btn = card.querySelector('.add-to-cart');
+                addToCart(btn);
+                found = true;
+            }
+        });
+
+        if (found) {
+            // Close modal
+            if (window.currentModal) window.currentModal.hide();
+            // Scroll to cart
+            document.querySelector('.col-md-3').scrollIntoView({ behavior: 'smooth' });
+        } else {
+            alert('Item not found in menu data.');
+        }
+    }
+    // Image Preview Modal Logic
+    function openImage(src) {
+        document.getElementById('previewImage').src = src;
+        var myModal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+        myModal.show();
+    }
+</script>
+
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-transparent border-0">
+            <div class="modal-body p-0 position-relative">
+                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3"
+                    data-bs-dismiss="modal" aria-label="Close"></button>
+                <img id="previewImage" src="" class="img-fluid rounded shadow-lg w-100" alt="Food Preview">
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

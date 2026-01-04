@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2 class="mb-3">Dashboard</h2>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card text-white bg-primary mb-3 shadow">
+                    <div class="card-body">
+                        <h5 class="card-title">Prepared Today</h5>
+                        <p class="card-text fs-4">{{ prepared_today }} Units</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-success mb-3 shadow">
+                    <div class="card-body">
+                        <h5 class="card-title">Sold Today</h5>
+                        <p class="card-text fs-4">{{ sold_today }} Units</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-danger mb-3 shadow">
+                    <div class="card-body">
+                        <h5 class="card-title">Waste Today</h5>
+                        <p class="card-text fs-4">{{ waste_today }} Units</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-info mb-3 shadow">
+                    <div class="card-body">
+                        <h5 class="card-title">Predicted Tomorrow</h5>
+                        <p class="card-text fs-4">{{ predicted_tomorrow }} Units</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Revenue Trend (Last 7 Days)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Sales vs Waste (Last 7 Days)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="wasteChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Top Wasted Items</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="itemChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Real Data for Charts
+    // Parsing JSON from Jinja to avoid IDE linting errors and Undefined errors
+    const dates = JSON.parse('{{ dates | default([]) | tojson | safe }}');
+    const salesData = JSON.parse('{{ sales_data | default([]) | tojson | safe }}');
+    const wasteDataChart = JSON.parse('{{ waste_data_chart | default([]) | tojson | safe }}');
+    const wasteLabels = JSON.parse('{{ waste_labels | default([]) | tojson | safe }}');
+    const wasteValues = JSON.parse('{{ waste_values | default([]) | tojson | safe }}');
+    const revenueData = JSON.parse('{{ revenue_data | default([]) | tojson | safe }}');
+
+    const ctxWaste = document.getElementById('wasteChart').getContext('2d');
+    const wasteChart = new Chart(ctxWaste, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: 'Sold',
+                data: salesData,
+                borderColor: '#198754',
+                tension: 0.1
+            }, {
+                label: 'Waste',
+                data: wasteDataChart,
+                borderColor: '#dc3545',
+                tension: 0.1
+            }]
+        }
+    });
+
+    const ctxItem = document.getElementById('itemChart').getContext('2d');
+    const itemChart = new Chart(ctxItem, {
+        type: 'line',
+        data: {
+            labels: wasteLabels,
+            datasets: [{
+                label: 'Waste Qty',
+                data: wasteValues,
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(54, 162, 235, 0.2)',
+                    'rgba(255, 206, 86, 0.2)',
+                    'rgba(75, 192, 192, 0.2)'
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)'
+                ],
+                borderWidth: 1
+            }]
+        }
+    });
+
+    const ctxRev = document.getElementById('revenueChart').getContext('2d');
+    new Chart(ctxRev, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: 'Revenue ($)',
+                data: revenueData,
+                borderColor: '#ffc107',
+                backgroundColor: 'rgba(255, 193, 7, 0.2)',
+                fill: true,
+                tension: 0.3
+            }]
+        }
+    });
+</script>
+{% endblock %}

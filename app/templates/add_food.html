@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Add New Food Item</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('main.add_food') }}">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Food Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required
+                            placeholder="e.g. Veg Burger">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="category" class="form-label">Category</label>
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="Fast Food">Fast Food</option>
+                                <option value="South Indian">South Indian</option>
+                                <option value="Snacks">Snacks</option>
+                                <option value="Dessert">Dessert</option>
+                                <option value="Main Course">Main Course</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="cost" class="form-label">Price ($)</label>
+                            <input type="number" step="0.01" class="form-control" id="cost" name="cost" required
+                                placeholder="5.99">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="image_url" class="form-label">Image URL</label>
+                        <input type="url" class="form-control" id="image_url" name="image_url"
+                            placeholder="https://source.unsplash.com/...">
+                        <div class="form-text">Leave blank for a default placeholder image.</div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Add Item</button>
+                        <a href="{{ url_for('main.delivery_menu') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

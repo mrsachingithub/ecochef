@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12 d-flex justify-content-between align-items-center">
+        <h2>Reports</h2>
+        <div class="d-flex gap-2">
+            <input type="text" class="form-control" placeholder="Filter by Menu Item..." id="menuFilter">
+            <button class="btn btn-outline-primary">Weekly</button>
+            <button class="btn btn-outline-secondary">Monthly</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('menuFilter').addEventListener('keyup', function () {
+        let filter = this.value.toUpperCase();
+        let rows = document.querySelector("tbody").rows;
+        for (let i = 0; i < rows.length; i++) {
+            let col = rows[i].cells[1]; // Item Name column
+            if (col) {
+                let txtValue = col.textContent || col.innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    rows[i].style.display = "";
+                } else {
+                    rows[i].style.display = "none";
+                }
+            }
+        }
+    });
+</script>
+
+<div class="card shadow">
+    <div class="card-body">
+        <h5 class="card-title">Weekly Summary</h5>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Date</th>
+                        <th>Item</th>
+                        <th>Prepared</th>
+                        <th>Sold (Total)</th>
+                        <th>Wsate</th>
+                        <th>Cost Impact</th>
+                        <th>Efficiency</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Placeholder Rows -->
+                    <tr>
+                        <td>2023-10-25</td>
+                        <td>Rice Bowl</td>
+                        <td>50</td>
+                        <td>45</td>
+                        <td>5</td>
+                        <td>$15.00</td>
+                        <td><span class="badge bg-success">90%</span></td>
+                    </tr>
+                    <tr>
+                        <td>2023-10-25</td>
+                        <td>Veg Burger</td>
+                        <td>30</td>
+                        <td>20</td>
+                        <td>10</td>
+                        <td>$40.00</td>
+                        <td><span class="badge bg-warning text-dark">66%</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

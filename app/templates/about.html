@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row align-items-center mb-5">
+        <div class="col-lg-6">
+            <h1 class="display-4 fw-bold text-success mb-4">About EcoChef</h1>
+            <p class="lead text-muted">Revolutionizing food delivery with sustainability at our core.</p>
+            <p>At EcoChef, we believe that great food shouldn't come at the cost of our planet. Our mission is to
+                provide delicious, high-quality meals while minimizing waste and maximizing positive impact.</p>
+            <p>We source our ingredients locally, use eco-friendly packaging, and use advanced analytics to predict
+                demand and reduce food waste in our kitchen.</p>
+        </div>
+        <div class="col-lg-6">
+            <img src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+                class="img-fluid rounded shadow" alt="Healthy Cooking">
+        </div>
+    </div>
+
+    <div class="row text-center mb-5">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm p-4">
+                <div class="text-success display-4 mb-3"><i class="bi bi-recycle"></i></div>
+                <h3 class="h5 fw-bold">Zero Waste</h3>
+                <p class="text-muted">We strive for zero food waste through smart inventory management and portion
+                    control.</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm p-4">
+                <div class="text-primary display-4 mb-3"><i class="bi bi-globe"></i></div>
+                <h3 class="h5 fw-bold">Sustainable Sourcing</h3>
+                <p class="text-muted">We work directly with local farmers to bring you the freshest ingredients with
+                    lower carbon footprint.</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm p-4">
+                <div class="text-warning display-4 mb-3"><i class="bi bi-bicycle"></i></div>
+                <h3 class="h5 fw-bold">Eco-Delivery</h3>
+                <p class="text-muted">Our delivery fleet is 100% electric or bicycle-based to keep our city's air clean.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
